@@ -100,7 +100,7 @@
                  Grid.Column="0"
                  Grid.ColumnSpan="4"
                  FontSize="20"
-                 PreviewTextInput="input_PreviewTextInput"
+                 PreviewTextInput="Input_PreviewTextInput"
                  TextChanged="Input_TextChanged"
                  TextWrapping="Wrap"
                  VerticalScrollBarVisibility="Auto" />
@@ -195,7 +195,6 @@
                 Content="/" />
         <Grid Grid.Column="2"
               Grid.Row="2"
-              IsEnabled="false"
             >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />

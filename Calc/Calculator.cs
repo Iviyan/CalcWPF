@@ -7,23 +7,10 @@ namespace Calc
 {
     public static class Calculator
     {
-        enum Operation : byte
+        public abstract class Entity
         {
-            add,
-            subtract,
-            multiply,
-            divide
+            public abstract double Calculate();
         }
-        static Operation GetOperation(char op) => op switch
-        {
-            '+' => Operation.add,
-            '-' => Operation.subtract,
-            '*' => Operation.multiply,
-            '/' => Operation.divide,
-            _ => throw new NotImplementedException(),
-        };
-
-        class Entity { }
         class Number : Entity
         {
             public double Num { get; set; }
@@ -31,158 +18,209 @@ namespace Calc
 
             public static implicit operator Number(double num) => new Number(num);
             public static implicit operator double(Number number) => number.Num;
+
+            public override double Calculate() => Num;
         }
-        class Node : Entity
+        abstract class Operation : Entity { }
+        abstract class Binary : Operation
         {
             public Entity Left { get; set; }
-            public Operation Operation { get; set; }
             public Entity Right { get; set; }
-            public Node() { }
-            public Node(Operation operation, Entity left = null, Entity right = null) =>
-                (Operation, Left, Right) = (operation, left, right);
-            public double Calculate()
-            {
-                double left = Left switch
-                {
-                    Node node => node.Calculate(),
-                    Number number => number,
-                    _ => throw new FormatException()
-                };
 
-                double right = Right switch
-                {
-                    Node node => node.Calculate(),
-                    Number number => number,
-                    _ => throw new FormatException()
-                };
+            public Binary(Entity left = null, Entity right = null) =>
+                (Left, Right) = (left, right);
+        }
+        abstract class Unary : Operation
+        {
+            public Entity Entity { get; set; }
 
-                return Operation switch
-                {
-                    Operation.add => left + right,
-                    Operation.subtract => left - right,
-                    Operation.multiply => left * right,
-                    Operation.divide => left / right,
-                    _ => throw new FormatException()
-                };
-            }
+            public Unary(Entity entity = null) =>
+                Entity = entity;
+        }
+
+        class Addition : Binary
+        {
+            public Addition(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Left.Calculate() + Right.Calculate();
+        }
+        class Subtraction : Binary
+        {
+            public Subtraction(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Left.Calculate() - Right.Calculate();
+        }
+        class Multiplication : Binary
+        {
+            public Multiplication(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Left.Calculate() * Right.Calculate();
+        }
+        class Division : Binary
+        {
+            public Division(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Left.Calculate() / Right.Calculate();
+        }
+        class Exponentiation : Binary
+        {
+            public Exponentiation(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Math.Pow(Left.Calculate(), Right.Calculate());
+        }
+
+        class Negation : Unary
+        {
+            public Negation(Entity entity = null) : base(entity) { }
+            public override double Calculate() => -Entity.Calculate();
+        }
+        class Sin : Unary
+        {
+            public Sin(Entity entity = null) : base(entity) { }
+            public override double Calculate() => Math.Sin(Entity.Calculate());
+        }
+        class Cos : Unary
+        {
+            public Cos(Entity entity = null) : base(entity) { }
+            public override double Calculate() => Math.Cos(Entity.Calculate());
         }
 
         public static double Calculate(string exp)
         {
-            Entity treeExp = GenerateTree(exp);
+            if (String.IsNullOrWhiteSpace(exp))
+                return 0;
 
-            return treeExp switch
-            {
-                Node node => node.Calculate(),
-                Number number => number,
-                _ => throw new FormatException()
-            };
+            if (double.TryParse(exp, out double result))
+                return result;
+
+            Expression expression = new Expression(exp.Replace(" ", ""));
+            Entity treeExp = expression.Calculate();
+
+            return treeExp.Calculate();
         }
 
-        const string operations = "+-*/";
-        static Entity GenerateTree(ReadOnlySpan<char> exp)
+        public class Expression
         {
-            if (exp.All(c => Char.IsDigit(c)))
-                return new Number(double.Parse(exp));
+            public string Exp { get; set; }
+            int pos = 0;
+            public Expression(string exp) => Exp = exp;
 
-            Node last = null;
-            int startParseIndex = 0;
-            for (int i = 0; i < exp.Length; i++)
+            public Entity Calculate()
             {
-                char c = exp[i];
-                if (operations.Contains(c))
+                pos = 0;
+                return ParseAddSub();
+            }
+            public Entity ParseAddSub()
+            {
+                Entity result = ParseMulDiv();
+
+                while (true)
                 {
-                    if (startParseIndex == i)
-                        throw new FormatException();
+                    if (CheckOperation('+')) result = new Addition(result, ParseMulDiv());
+                    else if (CheckOperation('-')) result = new Subtraction(result, ParseMulDiv());
+                    else return result;
 
-                    double num = double.Parse(exp.Slice(startParseIndex, i - startParseIndex));
-                    startParseIndex = i + 1;
+                }
+            }
+            public Entity ParseMulDiv()
+            {
+                Entity result = ParseExp();
 
-                    Operation op = GetOperation(c);
-                    if (last == null)
+                while (true)
+                {
+                    if (CheckOperation('*')) result = new Multiplication(result, ParseExp());
+                    else if (CheckOperation('('))
                     {
-                        last = new Node(op, new Number(num));
+                        result = new Multiplication(result, ParseAddSub());
+                        if (ReadOperation() != ")")
+                            throw new FormatException("Отсутствует )");
                     }
-                    else
-                    {
-                        if ((last.Operation == Operation.add || last.Operation == Operation.subtract)
-                            && (op == Operation.multiply || op == Operation.divide))
-                        {
-                            var priorityOperationsTree = GeneratePriorityOperationsTree(num, op, exp.Slice(startParseIndex));
-                            last.Right = priorityOperationsTree.entity;
-                            
-                            startParseIndex += priorityOperationsTree.length;
-                            if (startParseIndex == exp.Length)
-                                return last;
+                    else if (CheckOperation('/')) result = new Division(result, ParseExp());
+                    else return result;
+                }
+            }
+            public Entity ParseExp()
+            {
+                Entity result = ParseNumberUnaryBrackets();
 
-                            last = new Node(GetOperation(exp[startParseIndex]), last);
-                            startParseIndex++;
-                            i = startParseIndex;
+                while (true)
+                {
+                    if (CheckOperation('^')) result = new Exponentiation(result, ParseNumberUnaryBrackets());
+                    else return result;
+                }
+            }
+            public Entity ParseNumberUnaryBrackets()
+            {
+                Entity result = null;
+
+                string op = ReadOperation();
+                switch (op?.ToLower())
+                {
+                    case "-": result = new Negation(ParseNumberUnaryBrackets()); break;
+                    case "(":
+                        result = ParseAddSub();
+                        if (ReadOperation() != ")")
+                            throw new FormatException("Отсутствует )");
+                        break;
+
+                    case "sin":
+                        result = new Sin(ParseNumberUnaryBrackets());
+                        break;
+                    case "cos":
+                        result = new Cos(ParseNumberUnaryBrackets());
+                        break;
+
+                    case "":
+                        int startPos = pos;
+                        while (pos < Exp.Length)
+                        {
+                            char c = Exp[pos];
+                            if (Char.IsDigit(c) || Char.ToLower(c) is '.' or ',' or 'e')
+                                ++pos;
+                            else
+                                break;
                         }
+
+                        if (double.TryParse(Exp[startPos..pos], out double num))
+                            result = new Number(num);
                         else
-                        {
-                            last.Right = new Number(num);
-                            last = new Node(op, last);
-                        }
-                    }
+                            throw new FormatException($"Ошибка распознавания {Exp[startPos..pos]}");
+
+                        break;
+                    case null:
+                        throw new FormatException("Отсутствует число");
                 }
+                if (result == null)
+                    throw new FormatException($"Оператора {op} не существует");
+                return result;
             }
 
-            if (startParseIndex == exp.Length)
-                throw new FormatException();
-
-            last.Right = new Number(double.Parse(exp.Slice(startParseIndex)));
-            return last;
-        }
-
-        static (Entity entity, int length) GeneratePriorityOperationsTree(double number, Operation operation, ReadOnlySpan<char> exp)
-        {
-            if (exp.All(c => Char.IsDigit(c)))
-                return (new Node(operation, new Number(number), new Number(double.Parse(exp))), exp.Length);
-
-            Node last = new Node(operation, new Number(number));
-            int startParseIndex = 0;
-            for (int i = 0; i < exp.Length; i++)
+            string ReadOperation()
             {
-                char c = exp[i];
-                if (operations.Contains(c))
+                if (pos >= Exp.Length) return null;
+
+                char c = Exp[pos];
+
+                if (c is '-' or '(' or ')')
                 {
-                    if (startParseIndex == i)
-                        throw new FormatException();
-
-                    double num = double.Parse(exp.Slice(startParseIndex, i - startParseIndex));
-                    startParseIndex = i + 1;
-
-                    Operation op = GetOperation(c);
-
-                    if (op == Operation.add || op == Operation.subtract)
-                    {
-                        last.Right = new Number(num);
-                        return (last, i);
-                    }
-
-                    last.Right = new Number(num);
-                    last = new Node(op, last);
+                    ++pos;
+                    return c.ToString();
                 }
+
+                int startPos = pos;
+                while (pos < Exp.Length)
+                {
+                    c = Exp[pos];
+                    if (Char.IsDigit(c) || c is '.' or ',' or '(')
+                        break;
+                    else
+                        ++pos;
+                }
+
+                return Exp[startPos..pos];
             }
+            bool CheckOperation(char op)
+            {
+                if (pos >= Exp.Length) return false;
 
-            if (startParseIndex == exp.Length)
-                throw new FormatException();
-
-            last.Right = new Number(double.Parse(exp.Slice(startParseIndex)));
-            return (last, exp.Length);
-        }
-
-        public static bool All<TSource>(this ReadOnlySpan<TSource> source, Predicate<TSource> predicate)
-        {
-            if (source == null || predicate == null)
-                throw new ArgumentNullException();
-
-            foreach (TSource element in source)
-                if (!predicate(element))
-                    return false;
-
-            return true;
+                if (Exp[pos] == op) { ++pos; return true; }
+                return false;
+            }
         }
     }
 }

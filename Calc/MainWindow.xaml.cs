@@ -27,9 +27,9 @@ namespace Calc
             InitializeComponent();
         }
 
-        private void input_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (!e.Text.All(c => Char.IsDigit(c) || ",+-*/".Contains(c)))
+            if (!e.Text.All(c => Char.IsDigit(c) || ",+-*/^()".Contains(c) || Char.ToLower(c) is >= 'a' and <= 'z'))
                 e.Handled = true;
         }
 
@@ -43,12 +43,12 @@ namespace Calc
         {
             try
             {
-                string result = Calculator.Calculate(Input.Text.Replace(" ", "")).ToString();
+                string result = Calculator.Calculate(Input.Text).ToString();
                 Result.Text = $"= {result}";
             }
-            catch
+            catch (Exception e)
             {
-                if (writeErrorMsg) Result.Text = $"Ошибка";
+                if (writeErrorMsg) Result.Text = $"{e.Message}";
             }
         }
         private void CalcButton_Click(object sender, RoutedEventArgs e)
@@ -59,7 +59,7 @@ namespace Calc
         private void BackspaceButton_Click(object sender, RoutedEventArgs e)
         {
             if (Input.Text.Length > 0)
-                Input.Text = Input.Text.Substring(0, Input.Text.Length - 1);
+                Input.Text = Input.Text[0..^1];
         }
         private void SymbolButton_Click(object sender, RoutedEventArgs e)
         {
@@ -77,6 +77,4 @@ namespace Calc
                 DoCalc(false);
         }
     }
-
-
 }
