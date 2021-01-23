@@ -29,7 +29,7 @@ namespace Calc
 
         private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (!e.Text.All(c => Char.IsDigit(c) || ",+-*/^()".Contains(c) || Char.ToLower(c) is >= 'a' and <= 'z'))
+            if (!e.Text.All(c => Char.IsDigit(c) || ",+-*/^!()".Contains(c) || Char.ToLower(c) is >= 'a' and <= 'z'))
                 e.Handled = true;
         }
 
@@ -75,6 +75,11 @@ namespace Calc
         {
             if (AutoCalcButton?.IsChecked == true)
                 DoCalc(false);
+        }
+
+        private void Result_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Clipboard.SetText(Result.Text.TrimStart(new char[] { ' ', '=' }));
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Calc
 {
     public static class Calculator
     {
+        public static bool IsInt(double num) => Math.Abs(num % 1) < 1E-14;
         public abstract class Entity
         {
             public abstract double Calculate();
@@ -63,6 +64,11 @@ namespace Calc
             public Exponentiation(Entity left = null, Entity right = null) : base(left, right) { }
             public override double Calculate() => Math.Pow(Left.Calculate(), Right.Calculate());
         }
+        class Sqrt : Binary
+        {
+            public Sqrt(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Math.Pow(Left.Calculate(), 1d / Right.Calculate());
+        }
 
         class Negation : Unary
         {
@@ -79,6 +85,33 @@ namespace Calc
             public Cos(Entity entity = null) : base(entity) { }
             public override double Calculate() => Math.Cos(Entity.Calculate());
         }
+        class Tan : Unary
+        {
+            public Tan(Entity entity = null) : base(entity) { }
+            public override double Calculate() => Math.Tan(Entity.Calculate());
+        }
+        class Cot : Unary
+        {
+            public Cot(Entity entity = null) : base(entity) { }
+            public override double Calculate() => 1d / Math.Tan(Entity.Calculate());
+        }
+        class Factorial : Unary
+        {
+            public Factorial(Entity entity = null) : base(entity) { }
+            public override double Calculate()
+            {
+                double res = 1;
+                var num_ = Entity.Calculate();
+
+                if (!IsInt(num_) || num_ < 0)
+                    throw new FormatException($"Невозможно вычислить факториал из {num_}");
+
+                int num = (int)num_;
+                for (int i = 1; i < num; i++, res *= i) ;
+
+                return res;
+            }
+        }
 
         public static double Calculate(string exp)
         {
@@ -91,7 +124,7 @@ namespace Calc
             Expression expression = new Expression(exp.Replace(" ", ""));
             Entity treeExp = expression.Calculate();
 
-            return treeExp.Calculate();
+            return Math.Round(treeExp.Calculate(), 14);
         }
 
         public class Expression
@@ -119,68 +152,86 @@ namespace Calc
             }
             public Entity ParseMulDiv()
             {
-                Entity result = ParseExp();
+                Entity result = ParseExpFact();
 
                 while (true)
                 {
-                    if (CheckOperation('*')) result = new Multiplication(result, ParseExp());
+                    if (CheckOperation('*')) result = new Multiplication(result, ParseExpFact());
                     else if (CheckOperation('('))
                     {
                         result = new Multiplication(result, ParseAddSub());
                         if (ReadOperation() != ")")
                             throw new FormatException("Отсутствует )");
                     }
-                    else if (CheckOperation('/')) result = new Division(result, ParseExp());
+                    else if (CheckOperation('/')) result = new Division(result, ParseExpFact());
                     else return result;
                 }
             }
-            public Entity ParseExp()
+            public Entity ParseExpFact()
             {
-                Entity result = ParseNumberUnaryBrackets();
+                Entity result = ParseNumberUnaryBracketsFunctions();
 
                 while (true)
                 {
-                    if (CheckOperation('^')) result = new Exponentiation(result, ParseNumberUnaryBrackets());
+                    if (CheckOperation('^')) result = new Exponentiation(result, ParseNumberUnaryBracketsFunctions());
+                    if (CheckOperation('!')) result = new Factorial(result);
                     else return result;
                 }
             }
-            public Entity ParseNumberUnaryBrackets()
+            public Entity ParseNumberUnaryBracketsFunctions()
             {
                 Entity result = null;
 
                 string op = ReadOperation();
                 switch (op?.ToLower())
                 {
-                    case "-": result = new Negation(ParseNumberUnaryBrackets()); break;
+                    case "-": result = new Negation(ParseNumberUnaryBracketsFunctions()); break;
                     case "(":
                         result = ParseAddSub();
-                        if (ReadOperation() != ")")
+                        if (!CheckOperation(')'))
                             throw new FormatException("Отсутствует )");
+                        break;
+                    case "sqrt":
+                        if (CheckOperation('(', false))
+                        {
+                            result = new Sqrt(ParseNumberUnaryBracketsFunctions(), new Number(2));
+                        }
+                        else
+                        {
+                            var result_ = new Sqrt();
+                            if (pos >= Exp.Length || !Char.IsDigit(Exp[pos]) || !TryReadNaturalNumber(out double num))
+                                throw new FormatException("Степень корня должна быть натуральным чисом");
+                            else
+                                result_.Right = new Number(num);
+
+                            result_.Left = ParseNumberUnaryBracketsFunctions();
+                            result = result_;
+                        }
                         break;
 
                     case "sin":
-                        result = new Sin(ParseNumberUnaryBrackets());
+                        result = new Sin(ParseNumberUnaryBracketsFunctions());
                         break;
                     case "cos":
-                        result = new Cos(ParseNumberUnaryBrackets());
+                        result = new Cos(ParseNumberUnaryBracketsFunctions());
+                        break;
+                    case "tan":
+                    case "tg":
+                        result = new Tan(ParseNumberUnaryBracketsFunctions());
+                        break;
+                    case "cot":
+                    case "ctg":
+                        result = new Cot(ParseNumberUnaryBracketsFunctions());
+                        break;
+                    case "pi":
+                        result = new Number(Math.PI);
+                        break;
+                    case "e":
+                        result = new Number(Math.E);
                         break;
 
                     case "":
-                        int startPos = pos;
-                        while (pos < Exp.Length)
-                        {
-                            char c = Exp[pos];
-                            if (Char.IsDigit(c) || Char.ToLower(c) is '.' or ',' or 'e')
-                                ++pos;
-                            else
-                                break;
-                        }
-
-                        if (double.TryParse(Exp[startPos..pos], out double num))
-                            result = new Number(num);
-                        else
-                            throw new FormatException($"Ошибка распознавания {Exp[startPos..pos]}");
-
+                        result = new Number(ReadNumber());
                         break;
                     case null:
                         throw new FormatException("Отсутствует число");
@@ -190,6 +241,47 @@ namespace Calc
                 return result;
             }
 
+            double ReadNumber()
+            {
+                int startPos = pos;
+
+                while (pos < Exp.Length)
+                {
+                    char c = Exp[pos];
+                    if (Char.IsDigit(c) || Char.ToLower(c) is '.' or ',' or 'e')
+                        ++pos;
+                    else
+                        break;
+                }
+
+                if (double.TryParse(Exp[startPos..pos], out double num))
+                    return num;
+                else
+                    throw new FormatException($"Ошибка распознавания {Exp[startPos..pos]}");
+            }
+            bool TryReadNaturalNumber(out double number)
+            {
+                number = 0;
+                int startPos = pos;
+
+                while (pos < Exp.Length)
+                {
+                    char c = Exp[pos];
+                    if (Char.IsDigit(c))
+                        ++pos;
+                    else
+                    {
+                        if (c is '.' or ',' or 'e' or 'E')
+                            return false;
+                        break;
+                    }
+                }
+
+                if (double.TryParse(Exp[startPos..pos], out number))
+                    return true;
+                else
+                    throw new FormatException($"Ошибка распознавания {Exp[startPos..pos]}");
+            }
             string ReadOperation()
             {
                 if (pos >= Exp.Length) return null;
@@ -206,7 +298,7 @@ namespace Calc
                 while (pos < Exp.Length)
                 {
                     c = Exp[pos];
-                    if (Char.IsDigit(c) || c is '.' or ',' or '(')
+                    if (Char.IsDigit(c) || ".,()+-*/^!".Contains(c))
                         break;
                     else
                         ++pos;
@@ -214,11 +306,11 @@ namespace Calc
 
                 return Exp[startPos..pos];
             }
-            bool CheckOperation(char op)
+            bool CheckOperation(char op, bool read = true)
             {
                 if (pos >= Exp.Length) return false;
 
-                if (Exp[pos] == op) { ++pos; return true; }
+                if (Exp[pos] == op) { if (read) ++pos; return true; }
                 return false;
             }
         }
