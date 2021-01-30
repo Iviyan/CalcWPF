@@ -1,0 +1,359 @@
+﻿<UserControl x:Class="Calc.ScientificCalc"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Calc"
+             xmlns:ext="clr-namespace:Calc"
+             mc:Ignorable="d"
+             d:Background="White"
+             d:DesignHeight="800"
+             d:DesignWidth="650"
+             FontFamily="PMingLiU">
+
+    <UserControl.Resources>
+        <Style x:Key="InputButton">
+            <EventSetter Event="Button.Click"
+                         Handler="SymbolButton_Click" />
+        </Style>
+        <Style x:Key="NumberButton"
+               BasedOn="{StaticResource InputButton}">
+            <Setter Property="Control.Background"
+                    Value="#fafafa" />
+            <Setter Property="Control.FontSize"
+                    Value="26" />
+        </Style>
+        <Style x:Key="OperationButton"
+               BasedOn="{StaticResource InputButton}">
+            <Setter Property="Control.Background"
+                    Value="#e5e5e5" />
+            <Setter Property="Control.FontSize"
+                    Value="26" />
+            <Setter Property="Control.FontWeight"
+                    Value="Light" />
+        </Style>
+        <Style x:Key="OperationButton_"
+               BasedOn="{StaticResource InputButton}">
+            <Setter Property="Control.Background"
+                    Value="#e5e5e5" />
+            <Setter Property="Control.FontSize"
+                    Value="22" />
+            <Setter Property="Control.FontWeight"
+                    Value="Light" />
+        </Style>
+        <Style x:Key="CommandButton">
+            <Setter Property="Control.Background"
+                    Value="#D6CE98" />
+            <Setter Property="Control.FontSize"
+                    Value="26" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <TextBox x:Name="Input"
+                 Grid.Row="0"
+                 Grid.Column="0"
+                 Grid.ColumnSpan="5"
+                 FontSize="20"
+                 PreviewTextInput="Input_PreviewTextInput"
+                 TextChanged="Input_TextChanged"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 LostFocus="Input_LostFocus" />
+
+        <TextBlock x:Name="Result"
+                   Grid.Row="1"
+                   Grid.Column="0"
+                   Padding="10 0 0 0"
+                   Grid.ColumnSpan="4"
+                   FontSize="18"
+                   Text="="
+                   MouseUp="Result_MouseUp"
+                   ToolTip="Клик, чтобы скопировать результат" />
+
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="1"
+                Grid.Row="6"
+                Content="1" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="2"
+                Grid.Row="6"
+                Content="2" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="3"
+                Grid.Row="6"
+                Content="3" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="1"
+                Grid.Row="5"
+                Content="4" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="2"
+                Grid.Row="5"
+                Content="5" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="3"
+                Grid.Row="5"
+                Content="6" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="1"
+                Grid.Row="4"
+                Content="7" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="2"
+                Grid.Row="4"
+                Content="8" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="3"
+                Grid.Row="4"
+                Content="9" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="2"
+                Grid.Row="7"
+                Content="0" />
+        <Button Style="{StaticResource NumberButton}"
+                Grid.Column="1"
+                Grid.Row="7"
+                Content="," />
+
+        <ToggleButton x:Name="AutoCalcButton"
+                      Style="{DynamicResource ToggleButtonStyle1}"
+                      Grid.Column="3"
+                      Grid.Row="7"
+                      Content="auto"
+                      Background="#FFF4FAFF"
+                      FontSize="20"
+                      IsChecked="False"
+                      Checked="AutoCalcButton_Checked">
+        </ToggleButton>
+        <Button x:Name="CalcButton"
+                Style="{StaticResource CommandButton}"
+                Grid.Column="4"
+                Grid.Row="7"
+                Background="#FF6FAAD8"
+                Content="="
+                IsEnabled="{Binding ElementName=AutoCalcButton, Path=IsChecked, Converter={StaticResource inverter}}"
+                Click="CalcButton_Click" />
+
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="4"
+                Grid.Row="6"
+                Content="+" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="4"
+                Grid.Row="5"
+                Content="-" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="4"
+                Grid.Row="4"
+                Content="*" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="4"
+                Grid.Row="3"
+                Content="/" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="4"
+                Grid.Row="2"
+                Content="%" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="3"
+                Grid.Row="2"
+                Content="!" />
+        <Button Style="{StaticResource OperationButton}"
+                Grid.Column="3"
+                Grid.Row="3">
+            <TextBlock>
+                x<Run FontSize="16"
+                      BaselineAlignment="TextTop">y</Run>
+            </TextBlock>
+            <ext:Extensions.CustomInput>
+                <ext:CustomInput Text="^" />
+            </ext:Extensions.CustomInput>
+        </Button>
+        <Grid Grid.Column="2"
+              Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Style="{StaticResource OperationButton}"
+                    Grid.Column="0"
+                    Content="(" />
+            <Button Style="{StaticResource OperationButton}"
+                    Grid.Column="1"
+                    Content=")" />
+        </Grid>
+        <Grid Grid.Column="1"
+              Grid.Row="3"
+              Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Style="{StaticResource OperationButton}"
+                    Grid.Column="0"
+                    Content="π">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="pi" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton}"
+                    Grid.Column="1"
+                    Content="e" />
+        </Grid>
+
+        <Button x:Name="BackspaceButton"
+                Style="{StaticResource CommandButton}"
+                Grid.Column="1"
+                Grid.Row="2"
+                Content="&lt;-"
+                Click="BackspaceButton_Click" />
+        <Button x:Name="ClearButton"
+                Style="{StaticResource CommandButton}"
+                Grid.Column="0"
+                Grid.Row="2"
+                Content="C"
+                Click="ClearButton_Click" />
+
+        <Grid Grid.Column="0"
+              Grid.Row="3"
+              Grid.RowSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="0">
+                <TextBlock>
+                    log
+                    <Run FontSize="16"
+                         BaselineAlignment="TextBottom">y</Run>
+                    x
+                </TextBlock>
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="log2()"
+                                     SelectionOffset="-3"
+                                     SelectionLength="1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="1">
+                <TextBlock>
+                    log
+                    <Run FontSize="16"
+                         BaselineAlignment="TextBottom">10</Run>
+                    x
+                </TextBlock>
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="log()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="2"
+                    Content="ln">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="ln()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+        </Grid>
+        <Grid Grid.Column="0"
+              Grid.Row="5">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="0">
+                <TextBlock>
+                <Run FontSize="16"
+                     BaselineAlignment="TextTop">2</Run>
+                √x
+                </TextBlock>
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="sqrt()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="1">
+                <TextBlock>
+                <Run FontSize="16"
+                     BaselineAlignment="TextTop">y</Run>
+                √x
+                </TextBlock>
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="sqrt2()"
+                                     SelectionOffset="-3"
+                                     SelectionLength="1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Column="0"
+              Grid.Row="6"
+              Grid.RowSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="0"
+                    Content="sin">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="sin()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="1"
+                    Content="cos">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="cos()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="2"
+                    Content="tan">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="tan()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+            <Button Style="{StaticResource OperationButton_}"
+                    Grid.Row="3"
+                    Content="cot">
+                <ext:Extensions.CustomInput>
+                    <ext:CustomInput Text="cot()"
+                                     SelectionOffset="-1" />
+                </ext:Extensions.CustomInput>
+            </Button>
+        </Grid>
+
+    </Grid>
+</UserControl>

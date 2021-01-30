@@ -59,6 +59,11 @@ namespace Calc
             public Division(Entity left = null, Entity right = null) : base(left, right) { }
             public override double Calculate() => Left.Calculate() / Right.Calculate();
         }
+        class Mod : Binary
+        {
+            public Mod(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Left.Calculate() % Right.Calculate();
+        }
         class Exponentiation : Binary
         {
             public Exponentiation(Entity left = null, Entity right = null) : base(left, right) { }
@@ -68,6 +73,11 @@ namespace Calc
         {
             public Sqrt(Entity left = null, Entity right = null) : base(left, right) { }
             public override double Calculate() => Math.Pow(Left.Calculate(), 1d / Right.Calculate());
+        }
+        class Log : Binary
+        {
+            public Log(Entity left = null, Entity right = null) : base(left, right) { }
+            public override double Calculate() => Math.Log(Left.Calculate(), Right.Calculate());
         }
 
         class Negation : Unary
@@ -111,6 +121,11 @@ namespace Calc
 
                 return res;
             }
+        }
+        class Ln : Unary
+        {
+            public Ln(Entity entity = null) : base(entity) { }
+            public override double Calculate() => Math.Log(Entity.Calculate());
         }
 
         public static double Calculate(string exp)
@@ -164,6 +179,7 @@ namespace Calc
                             throw new FormatException("Отсутствует )");
                     }
                     else if (CheckOperation('/')) result = new Division(result, ParseExpFact());
+                    else if (CheckOperation('%')) result = new Mod(result, ParseExpFact());
                     else return result;
                 }
             }
@@ -208,6 +224,18 @@ namespace Calc
                             result = result_;
                         }
                         break;
+                    case "log":
+                        if (CheckOperation('(', false))
+                        {
+                            result = new Log(ParseNumberUnaryBracketsFunctions(), new Number(10));
+                        }
+                        else
+                        {
+                            Log res = (Log)(result = new Log());
+                            res.Right = new Number(ReadNumber());
+                            res.Left = ParseNumberUnaryBracketsFunctions();
+                        }
+                        break;
 
                     case "sin":
                         result = new Sin(ParseNumberUnaryBracketsFunctions());
@@ -222,6 +250,9 @@ namespace Calc
                     case "cot":
                     case "ctg":
                         result = new Cot(ParseNumberUnaryBracketsFunctions());
+                        break;
+                    case "ln":
+                        result = new Ln(ParseNumberUnaryBracketsFunctions());
                         break;
                     case "pi":
                         result = new Number(Math.PI);

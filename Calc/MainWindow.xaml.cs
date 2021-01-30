@@ -25,61 +25,17 @@ namespace Calc
         public MainWindow()
         {
             InitializeComponent();
+            Main.Content = new SimpleCalc();
         }
 
-        private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void SimpleCalcItem_Click(object sender, RoutedEventArgs e)
         {
-            if (!e.Text.All(c => Char.IsDigit(c) || ",+-*/^!()".Contains(c) || Char.ToLower(c) is >= 'a' and <= 'z'))
-                e.Handled = true;
+            Main.Content = new SimpleCalc();
         }
 
-        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        private void ScientificCalcItem_Click(object sender, RoutedEventArgs e)
         {
-            Input.Text = "";
-            Result.Text = "=";
-        }
-
-        void DoCalc(bool writeErrorMsg = true)
-        {
-            try
-            {
-                string result = Calculator.Calculate(Input.Text).ToString();
-                Result.Text = $"= {result}";
-            }
-            catch (Exception e)
-            {
-                if (writeErrorMsg) Result.Text = $"{e.Message}";
-            }
-        }
-        private void CalcButton_Click(object sender, RoutedEventArgs e)
-        {
-            DoCalc();
-        }
-
-        private void BackspaceButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (Input.Text.Length > 0)
-                Input.Text = Input.Text[0..^1];
-        }
-        private void SymbolButton_Click(object sender, RoutedEventArgs e)
-        {
-            Input.Text += ((Button)sender).Content;
-        }
-
-        private void AutoCalcButton_Checked(object sender, RoutedEventArgs e)
-        {
-            DoCalc();
-        }
-
-        private void Input_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (AutoCalcButton?.IsChecked == true)
-                DoCalc(false);
-        }
-
-        private void Result_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            Clipboard.SetText(Result.Text.TrimStart(new char[] { ' ', '=' }));
+            Main.Content = new ScientificCalc();
         }
     }
 }
