@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Markup;
 
 namespace Calc
 {
@@ -28,4 +29,17 @@ namespace Calc
             return element.GetValue(CustomInputProperty) as CustomInput;
         }
     }
+
+    public sealed class Int32Extension : MarkupExtension
+    {
+        public Int32Extension(int value) => Value = value;
+        public int Value { get; set; }
+        public override Object ProvideValue(IServiceProvider sp) => Value;
+    };
+    public sealed class Int64Extension : MarkupExtension
+    {
+        public Int64Extension(long value) => Value = value;
+        public long Value { get; set; }
+        public override Object ProvideValue(IServiceProvider sp) => Value;
+    };
 }

@@ -1,39 +1,29 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:Calc">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Calc">
 
-    <Style x:Key="ToggleButtonStyle1"
-           TargetType="{x:Type ToggleButton}">
-        <Setter Property="Background"
-                Value="#FFB6C5CB" />
+    <Style x:Key="ToggleButtonStyle1" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Background" Value="#FFB6C5CB" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ToggleButton}">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
                             BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             SnapsToDevicePixels="true">
                         <ContentPresenter x:Name="contentPresenter"
-                                          Focusable="False"
-                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Focusable="False"
                                           RecognizesAccessKey="True"
-                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver"
-                                 Value="true">
-                            <Setter Property="Background"
-                                    TargetName="border"
-                                    Value="#FFE0F1FF" />
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter TargetName="border" Property="Background" Value="#FFE0F1FF" />
                         </Trigger>
-                        <Trigger Property="IsChecked"
-                                 Value="true">
-                            <Setter Property="Background"
-                                    TargetName="border"
-                                    Value="#FF6FAAB8" />
+                        <Trigger Property="IsChecked" Value="true">
+                            <Setter TargetName="border" Property="Background" Value="#FF6FAAB8" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

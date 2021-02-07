@@ -1,0 +1,373 @@
+﻿<UserControl x:Class="Calc.ProgrammerCalc"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Calc"
+             xmlns:m="clr-namespace:Calc"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:Background="White"
+             d:DesignHeight="600"
+             d:DesignWidth="500"
+             FontFamily="PMingLiU"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="NSLabel" TargetType="{x:Type Label}">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Light" />
+            <Setter Property="Margin" Value="10px 0 5px 0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="NSInput" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="3px" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="NSPanel" TargetType="{x:Type RadioButton}">
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template" Value="{DynamicResource NSPanelTemplate}" />
+            <EventSetter Event="Click" Handler="NSPanel_Click" />
+        </Style>
+
+        <Style x:Key="NumberButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#fafafa" />
+            <Setter Property="FontSize" Value="26" />
+            <EventSetter Event="Click" Handler="NumberButton_Click" />
+        </Style>
+        <Style x:Key="OperationButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#e5e5e5" />
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontWeight" Value="Light" />
+            <EventSetter Event="Click" Handler="OperationButton_Click" />
+        </Style>
+        <Style x:Key="CommandButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#D6CE98" />
+            <Setter Property="FontSize" Value="26" />
+        </Style>
+
+
+        <SolidColorBrush x:Key="RadioButton.Static.Glyph" Color="#0078D7" />
+        <SolidColorBrush x:Key="RadioButton.MouseOver.Background" Color="#D7D5D3" />
+        <SolidColorBrush x:Key="RadioButton.Pressed.Background" Color="#7FD7D5D3" />
+        <ControlTemplate x:Key="NSPanelTemplate" TargetType="{x:Type RadioButton}">
+            <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="markGrid" Margin="1 2 2 2">
+                    <Rectangle x:Name="optionMark"
+                               MinWidth="5"
+                               Fill="{StaticResource RadioButton.Static.Glyph}"
+                               Opacity="0" />
+                </Grid>
+                <ContentPresenter x:Name="contentPresenter"
+                                  Grid.Column="1"
+                                  Margin="{TemplateBinding Padding}"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  Focusable="False"
+                                  RecognizesAccessKey="True"
+                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="true">
+                    <Setter TargetName="templateRoot" Property="Background" Value="{StaticResource RadioButton.MouseOver.Background}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="true">
+                    <Setter TargetName="optionMark" Property="Opacity" Value="0.5" />
+                    <Setter TargetName="templateRoot" Property="Background" Value="{StaticResource RadioButton.Pressed.Background}" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="true">
+                    <Setter TargetName="optionMark" Property="Opacity" Value="1" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <local:RadixConverter x:Key="RadixConverter" />
+        <local:RadixMConverter x:Key="RadixMConverter" />
+        <local:IsEqualConverter x:Key="IsEqual" />
+        <local:IsNotEqualConverter x:Key="IsNotEqual" />
+        <local:IsMoreThanConverter x:Key="IsMoreThan" />
+        <local:TernaryConverter x:Key="TernaryConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="0.8*" />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Margin="0 10px 10px 5px" HorizontalAlignment="Right" Orientation="Horizontal">
+                <TextBlock x:Name="LeftNumberView"
+                           Grid.Row="0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           d:Text="0"
+                           FontSize="18"
+                           Foreground="#555"
+                           Visibility="{Binding ElementName=OperationView, Path=Visibility}">
+                    <TextBlock.Text>
+                        <MultiBinding Converter="{StaticResource RadixMConverter}">
+                            <Binding Path="LeftNumber" />
+                            <Binding Path="Radix" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock x:Name="OperationView"
+                           Grid.Row="0"
+                           Margin="6px 0 6px 0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           d:Text="+"
+                           FontSize="18"
+                           Foreground="#555"
+                           Tag="{Binding Path=Operator, Converter={StaticResource IsNotEqual}, ConverterParameter={x:Null}}"
+                           Text="{Binding Path=Operator}"
+                           Visibility="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Converter={StaticResource BooleanToVisibility}}" />
+                <TextBlock x:Name="RightNumberView"
+                           Grid.Row="0"
+                           Margin="0 0 6px 0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           d:Text="0"
+                           FontSize="18"
+                           Foreground="#555"
+                           Visibility="{Binding Path=SecondNumberVisibility, Converter={StaticResource BooleanToVisibility}}">
+                    <TextBlock.Text>
+                        <MultiBinding Converter="{StaticResource RadixMConverter}">
+                            <Binding Path="RightNumber" />
+                            <Binding Path="Radix" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+            </StackPanel>
+            <TextBlock x:Name="Result"
+                       Grid.Row="1"
+                       Margin="0 0 10px 0"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       d:Text="255"
+                       FontSize="24"
+                       Foreground="Black">
+                <TextBlock.Text>
+                    <MultiBinding Converter="{StaticResource RadixMConverter}">
+                        <Binding Path="Number" />
+                        <Binding Path="Radix" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+
+            <RadioButton Grid.Row="2" Style="{StaticResource NSPanel}" Tag="{m:Int32 16}">
+                <DockPanel LastChildFill="true">
+                    <Label Content="HEX" DockPanel.Dock="Left" Style="{StaticResource NSLabel}" />
+                    <TextBlock x:Name="HexInput"
+                               d:Text="FF"
+                               Style="{StaticResource NSInput}"
+                               Text="{Binding Path=Number, Converter={StaticResource RadixConverter}, ConverterParameter={m:Int32 16}}" />
+                </DockPanel>
+            </RadioButton>
+            <RadioButton Grid.Row="3"
+                         IsChecked="True"
+                         Style="{StaticResource NSPanel}"
+                         Tag="{m:Int32 10}">
+                <DockPanel LastChildFill="true">
+                    <Label Content="DEC" DockPanel.Dock="Left" Style="{StaticResource NSLabel}" />
+                    <TextBlock x:Name="DecInput"
+                               d:Text="255"
+                               Style="{StaticResource NSInput}"
+                               Text="{Binding Path=Number, Converter={StaticResource RadixConverter}, ConverterParameter={m:Int32 10}}" />
+                </DockPanel>
+            </RadioButton>
+            <RadioButton Grid.Row="4" Style="{StaticResource NSPanel}" Tag="{m:Int32 8}">
+                <DockPanel LastChildFill="true">
+                    <Label Content="OCT" DockPanel.Dock="Left" Style="{StaticResource NSLabel}" />
+                    <TextBlock x:Name="OctInput"
+                               d:Text="377"
+                               Style="{StaticResource NSInput}"
+                               Text="{Binding Path=Number, Converter={StaticResource RadixConverter}, ConverterParameter={m:Int32 8}}" />
+                </DockPanel>
+            </RadioButton>
+            <RadioButton Grid.Row="5" Style="{StaticResource NSPanel}" Tag="{m:Int32 2}">
+                <DockPanel LastChildFill="true">
+                    <Label Content="BIN" DockPanel.Dock="Left" Style="{StaticResource NSLabel}" />
+                    <TextBlock x:Name="BinInput"
+                               d:Text="1111 1111"
+                               Style="{StaticResource NSInput}"
+                               Text="{Binding Path=Number, Converter={StaticResource RadixConverter}, ConverterParameter={m:Int32 2}}" />
+                </DockPanel>
+            </RadioButton>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="BackspaceButton"
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Click="BackspaceButton_Click"
+                    Content="&lt;-"
+                    Style="{StaticResource CommandButton}" />
+            <Button x:Name="ClearButton"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    d:Content="C"
+                    Click="ClearButton_Click"
+                    Style="{StaticResource CommandButton}">
+                <Button.Content>
+                    <MultiBinding Converter="{StaticResource TernaryConverter}">
+                        <Binding Converter="{StaticResource IsEqual}" ConverterParameter="{m:Int64 0}" Path="Number" />
+                        <Binding Source="C" />
+                        <Binding Source="CE" />
+                    </MultiBinding>
+                </Button.Content>
+            </Button>
+
+            <Button Grid.Row="4"
+                    Grid.Column="2"
+                    Content="0"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="3"
+                    Grid.Column="1"
+                    Content="1"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="3"
+                    Grid.Column="2"
+                    Content="2"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 2}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="3"
+                    Grid.Column="3"
+                    Content="3"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 3}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="2"
+                    Grid.Column="1"
+                    Content="4"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 4}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="2"
+                    Grid.Column="2"
+                    Content="5"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 5}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="2"
+                    Grid.Column="3"
+                    Content="6"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 6}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="1"
+                    Grid.Column="1"
+                    Content="7"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 7}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="1"
+                    Grid.Column="2"
+                    Content="8"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 8}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="1"
+                    Grid.Column="3"
+                    Content="9"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 9}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="4"
+                    Grid.Column="0"
+                    Content="A"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 10}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="3"
+                    Grid.Column="0"
+                    Content="B"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 11}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="2"
+                    Grid.Column="0"
+                    Content="C"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 12}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="1"
+                    Grid.Column="0"
+                    Content="D"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 13}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="0"
+                    Grid.Column="0"
+                    Content="E"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 14}}"
+                    Style="{StaticResource NumberButton}" />
+            <Button Grid.Row="0"
+                    Grid.Column="1"
+                    Content="F"
+                    IsEnabled="{Binding Path=Radix, Converter={StaticResource IsMoreThan}, ConverterParameter={m:Int32 15}}"
+                    Style="{StaticResource NumberButton}" />
+
+
+            <Button x:Name="CalcButton"
+                    Grid.Row="4"
+                    Grid.Column="4"
+                    Background="#FF6FAAD8"
+                    Click="CalcButton_Click"
+                    Content="="
+                    Style="{StaticResource CommandButton}" />
+
+            <Button Grid.Row="4"
+                    Grid.Column="1"
+                    Content="+/-"
+                    Style="{StaticResource OperationButton}" />
+            <Button Grid.Row="4"
+                    Grid.Column="3"
+                    Content=","
+                    IsEnabled="False"
+                    Style="{StaticResource OperationButton}" />
+
+            <Button Grid.Row="3"
+                    Grid.Column="4"
+                    Content="+"
+                    Style="{StaticResource OperationButton}" />
+            <Button Grid.Row="2"
+                    Grid.Column="4"
+                    Content="-"
+                    Style="{StaticResource OperationButton}" />
+            <Button Grid.Row="1"
+                    Grid.Column="4"
+                    Content="*"
+                    Style="{StaticResource OperationButton}" />
+            <Button Grid.Row="0"
+                    Grid.Column="4"
+                    Content="/"
+                    Style="{StaticResource OperationButton}" />
+        </Grid>
+
+    </Grid>
+</UserControl>

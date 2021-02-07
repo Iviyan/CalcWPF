@@ -37,5 +37,10 @@ namespace Calc
         {
             Main.Content = new ScientificCalc();
         }
+
+        private void ProgrammerCalcItem_Click(object sender, RoutedEventArgs e)
+        {
+            Main.Content = new ProgrammerCalc();
+        }
     }
 }
